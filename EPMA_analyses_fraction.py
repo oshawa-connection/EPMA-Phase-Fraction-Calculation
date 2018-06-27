@@ -4,36 +4,15 @@
 Fitting routine for calculating the weight fraction of phases from bulk rock 
 chemistry and EPMA analysis of solid phase composition.
 
-Problems with the calculation are that elements that have a high
-weight are favoured over those with small weights.
-If the calculation was done with molar fraction,
-then crazy components like Si4O8 and Al4O6 instead of SiO2 and Al2O3, could 
-be used to bring them into similar ranges as each other again.
-
+Problems with the calculation are that if phases have very similar phase
+composition, then they cannot easily be distinguished.
 """
 #--------------------------------------------------------------------------------------------
 #-----Import all modules used
-import sys
 import os
 import numpy as np
 import pandas as pd
 from itertools import product
-#------------------------------------------------------------------------------
-#----Define all functions.
-#Matrix inner product
-#Some weird quirk with numpy means that I can't do this the normal way.
-def inner_product(big_matrix, small_matrix):
-        
-	for i in range(small_matrix.shape[0]):
-		for j in range(small_matrix.shape[1]):
-			big_matrix[i,j] = small_matrix[i,j] #Don't know why this doesn't work normally but oh well, this is going to be slow :(
-	return big_matrix
-
-def inner_product_two(big_matrix, small_matrix,file_count):       
-	for i in range(small_matrix.shape[0]):
-		for j in range(small_matrix.shape[1]):
-			big_matrix[i,j,file_count-1] = small_matrix[i,j] #Don't know why this doesn't work normally but oh well, this is going to be slow :(
-	return big_matrix 
 #------------------------------------------------------------------------------
 #----Load in all analyses
 #-----Initialise
@@ -45,50 +24,47 @@ phase_name_list=[]
 bulk_count = 0
 #Size of analyses arrays
 size_array = [0]
+found = False
 #--------------------------------------------------------------------------------------------
-#-----Begin import of .tbl files.
-for filename in os.listdir(pwd):
-    if filename.lower() == ('analyses.xlsx'):
-        analyses = pd.read_excel(filename)
-        found = True
-    elif filename.lower() == 'analyses.csv':
-        analyses = pd.read_csv(filename)
-        found = True
-    
-if found != True:
-    print ('You need to provide an analyses.csv or analyses.xlsx input file.')
-    sys.exit()
+#-----Import .xls files.
+
+analyses = pd.read_excel('analyses.xlsx')
+analyses = pd.read_excel('analyses.xlsx')
+analyses.drop(['comment'],axis=1,inplace=True)
+
+
+grouped_analyses = analyses.groupby('phase')
 
 
 #----------------------------------------------------------------------------------------------------------------------------
 #Number of phases
-m = len(phase_list)
+n = len(grouped_analyses)
 
 #Number of possible combinations of analyses.
 number_analyses_combos = 1
-for i in range(0,m):
+for i in range(0,n):
     number_analyses_combos = number_analyses_combos * size_array[i]
 
-#Number of equations
+
 #Number of possible combinations of analyses
-n = (number_analyses_combos * Analyses_matrix.shape[1]) + 1
+m = (number_analyses_combos * Analyses_matrix.shape[1]) + 1
 
 
 analyses.drop(['comment'],axis=1,inplace=True)
 
-grouped_analyses = analyses.groupby('phase')
+sizes_array = []
 phase_list = []
 
 
 for phase, phase_df in grouped_analyses:
     if phase == 'bulk':
-        Bulk_composition = np.array(phase_df.drop['phase'])
+        Bulk_composition = np.array(phase_df.drop(['phase'],axis=1))
     else:
-    
+       # sizes_array.append(len(phase_df))
         phase_list.append(phase)
+        
     
     
-    print(phase_df)
     
 
     
@@ -100,12 +76,12 @@ for phase, phase_df in grouped_analyses:
 #------------------------------------------------------------------------------
 #----Initialise Matrices
 #The initial bulk composition of the experiment
-b = np.zeros([n,1]) #b = n * 1
+b = np.zeros([m,1]) #b = n * 1
 
 #The coefficient matrix of fraction components for each analysis of each phase
 a = np.zeros([n,m]) #a = n * m
 #The vector of weight percentages of each phase
-x = np.zeros([m,1]) #x = m * 1
+x = np.zeros([n,1]) #x = m * 1
 
 sizes_array = []
 
