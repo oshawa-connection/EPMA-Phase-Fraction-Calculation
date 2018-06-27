@@ -1,10 +1,14 @@
-#!/usr/bin/env/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Created on Fri Feb 23 18:35:38 2018
 Fitting routine for calculating the weight fraction of phases from bulk rock 
 chemistry and EPMA analysis of solid phase composition.
 
-
+Problems with the calculation are that elements that have a high
+weight are favoured over those with small weights.
+If the calculation was done with molar fraction,
+then crazy components like Si4O8 and Al4O6 instead of SiO2 and Al2O3, could 
+be used to bring them into similar ranges as each other again.
 
 """
 #--------------------------------------------------------------------------------------------
@@ -53,12 +57,12 @@ size_array = [0]
 for file in os.listdir(pwd):
     if file.endswith('_bulk.csv') and (bulk_count == 0):
     
-        Bulk_composition = np.loadtxt(open(file,'rb'), dtype=float, comments='#', delimiter=',', converters=None, skiprows=1, usecols=(range(1,13)), unpack=False, ndmin=2)
+        Bulk_composition = np.loadtxt(open(file,'rb'), dtype=float, comments='#', delimiter=',', converters=None, skiprows=1, usecols=(range(0,11)), unpack=False, ndmin=2)
         bulk_count += 1
     
     if file.endswith('_analyses.csv'):
         print ('Importing ' + file)
-        IMPORTED_MATRIX = np.loadtxt(open(file,'rb'), dtype=float, comments='#', delimiter=',', converters=None, skiprows=1, usecols=(range(1,13)), unpack=False, ndmin=2)
+        IMPORTED_MATRIX = np.loadtxt(open(file,'rb'), dtype=float, comments='#', delimiter=',', converters=None, skiprows=1, usecols=(range(0,11)), unpack=False, ndmin=2)
         print ('Successfully imported ' + file)
 
         IMPORTED_MATRIXX = np.zeros([(IMPORTED_MATRIX.shape[0]),(IMPORTED_MATRIX.shape[1])])
@@ -137,7 +141,7 @@ m = Analyses_matrix.shape[2]
 
 #Equation
 #a . x  = b
-#------------------------------------------------------------------------------
+#-----------------------------------------h-------------------------------------
 #----Initialise Matrices
 #The initial bulk composition of the experiment
 b = np.zeros([n,1]) #b = n * 1
@@ -179,10 +183,28 @@ for j in range(0,Analyses_matrix.shape[1]):
 #Sum of all components is  = 1
 b[n-1,0] = 1
 #Solve by using least squares regression, to find the best fit
-x = np.linalg.lstsq(a,b)
-x = x[0]
+x,residuals,rank,s = np.linalg.lstsq(a,b)
 x = x*100
+
+r2 = 1 - residuals / (b.size * b.var())
+print ('r2 is %f'%(r2))
+
+
+
 total = np.sum(x)
+if any(i<0 for i in x) == True:
+    print('')
+    print('** Solved for negative values, switching to different solver ** ')
+    print('** Solver may give weird values. **')
+    from scipy.optimize import nnls
+    b = b[:,0]
+    x = nnls(a, b)
+    residuals = x[1]
+    print('Solved. Residual is %f' %(residuals))
+    x = x[0]
+    x = x*100
+    total = np.sum(x)
+
 
 #Print output
 print ('')
