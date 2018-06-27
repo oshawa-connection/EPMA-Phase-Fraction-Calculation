@@ -19,22 +19,6 @@ import numpy as np
 import pandas as pd
 from itertools import product
 #------------------------------------------------------------------------------
-#----Define all functions.
-#Matrix inner product
-#Some weird quirk with numpy means that I can't do this the normal way.
-def inner_product(big_matrix, small_matrix):
-        
-	for i in range(small_matrix.shape[0]):
-		for j in range(small_matrix.shape[1]):
-			big_matrix[i,j] = small_matrix[i,j] #Don't know why this doesn't work normally but oh well, this is going to be slow :(
-	return big_matrix
-
-def inner_product_two(big_matrix, small_matrix,file_count):       
-	for i in range(small_matrix.shape[0]):
-		for j in range(small_matrix.shape[1]):
-			big_matrix[i,j,file_count-1] = small_matrix[i,j] #Don't know why this doesn't work normally but oh well, this is going to be slow :(
-	return big_matrix 
-#------------------------------------------------------------------------------
 #----Load in all analyses
 #-----Initialise
 #List all files within the current directory.
@@ -115,15 +99,19 @@ for i in range(0,m):
 #Get all possible combinations of the phase analyses, encoded as the analysis number
 #And stored in an array.
 #Also take LSD and move out to the jungle somewhere     
-idm = list(product(*sizes_array))
-idm = np.asarray(idm)   
+
+
+
+#ACM = analyses combinations matrix.
+acm = list(product(*sizes_array))
+acm = np.asarray(acm)   
 row_counter = 0
 
 #Fill Coefficient matrix.
 for component in range(0,Analyses_matrix.shape[1]):
-    for i in range(0,idm.shape[0]):
-        for j in range(0,idm.shape[1]):
-            a[row_counter,j] = Analyses_matrix[idm[i,j],component,j]
+    for i in range(0,acm.shape[0]):
+        for j in range(0,acm.shape[1]):
+            a[row_counter,j] = Analyses_matrix[acm[i,j],component,j]
         row_counter +=1
 
 #Sum of all components is  = 1. All coefficients are 1 also.                       
