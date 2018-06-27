@@ -1,14 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env/python3
 # -*- coding: utf-8 -*-
 """Created on Fri Feb 23 18:35:38 2018
 Fitting routine for calculating the weight fraction of phases from bulk rock 
 chemistry and EPMA analysis of solid phase composition.
 
-Problems with the calculation are that elements that have a high
-weight are favoured over those with small weights.
-If the calculation was done with molar fraction,
-then crazy components like Si4O8 and Al4O6 instead of SiO2 and Al2O3, could 
-be used to bring them into similar ranges as each other again.
+
 
 """
 #--------------------------------------------------------------------------------------------
